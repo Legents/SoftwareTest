@@ -1,0 +1,6 @@
+*.dll
+*.pyd
+Include
+Lib
+Scripts
+*.cfg
