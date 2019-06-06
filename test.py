@@ -3,8 +3,21 @@ from selenium import webdriver
 from time import sleep
 
 import random
+import time
 import csv
 import re
+
+class Loginfo(object):
+    def __init__(self):
+        fname=time.strftime('%Y-%m-%d',time.gmtime())
+        print(fname)
+        self.log=open(fname+".txt",'w')
+
+    def log_write(self,msg):
+        self.log.write(msg)
+
+    def log_close(self):
+        self.log.close()
 
 def login(bs):
     user = bs.find_element_by_xpath('//input[@name="pwuser"]')
@@ -46,6 +59,37 @@ def post_message(bs,title,text):
 
     submit = bs.find_element_by_xpath('//input[@name="Submit"]')
     submit.click()
+    if title == '':
+        bs.find_element_by_xpath('//img[@src="images/error_bg.gif"]')
+        close = bs.find_element_by_xpath('//input[@value="关闭"]')
+        close.click()
+        result = 'title is empty'
+    elif title.isspace():
+        bs.current_window_handle
+        go_back = bs.find_element_by_xpath('//input[@value="返 回 继 续 操 作"]')
+        sleep(2)
+        go_back.click()
+        sleep(2)
+        result = 'title is space'
+    elif len(title)>100:
+        bs.find_element_by_xpath('//img[@src="images/error_bg.gif"]')
+        close = bs.find_element_by_xpath('//input[@value="关闭"]')
+        close.click()
+        result = 'title is too long'
+    elif len(title) < 100 and len(text)<3:
+        bs.find_element_by_xpath('//img[@src="images/error_bg.gif"]')
+        close = bs.find_element_by_xpath('//input[@value="关闭"]')
+        close.click()
+        result = 'text is too short'
+    elif len(text)>50000:
+        bs.find_element_by_xpath('//img[@src="images/error_bg.gif"]')
+        close = bs.find_element_by_xpath('//input[@value="关闭"]')
+        close.click()
+        result = 'text is too long'
+    else:
+        bs.current_window_handle
+        bs.back()
+        result = 'success!'
     sleep(2)
     bs.back()
     sleep(2)
@@ -55,25 +99,26 @@ def post_message(bs,title,text):
     bs.current_window_handle
     bs.refresh()
     sleep(3)
-    return bs
+    return result
 
 if __name__ == '__main__':
+    log = Loginfo()
     bs = webdriver.Firefox()
     bs.get("http://localhost/upload/login.php")
-    bs = login(bs)
+    login(bs)
+    bs.current_window_handle
     f = open("message.txt", "r")
     lines = f.readlines()  # 读取全部内容
     for line in lines:
-        bs = select_module(bs)
+        select_module(bs)
+        bs.current_window_handle
         list = re.split(';', line)
-        print(list[0])
-        print(list[1])
-        bs = post_message(bs,list[0],list[1])
-        bs.back()
+        msg = post_message(bs,list[0],list[1])
+        print(msg)
+        log.log_write('title:' + list[0] + '|||||text:' + list[1].strip() + '|||||result:' + msg + '\n')
         sleep(5)
     f.close()
-
-
+    log.log_close()
 
 
 
